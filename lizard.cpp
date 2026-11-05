@@ -77,10 +77,15 @@ void Cat::catThread (Cat *aCat) {
     }
     while(running) {
         aCat->sleepNow();
+        
+        // Locks counter before checking // JM
+        counter_mutex.lock(); 
         if (numCrossingSago2MonkeyGrass + numCrossingMonkeyGrass2Sago > MAX_LIZARD_CROSSING) {
             cout << "\tThe cats are happy - they have toys.\n";
             exit( -1 );
         }
+        // Unlocks counter // JM
+        counter_mutex.unlock();
     }
 }
 
@@ -132,6 +137,10 @@ void Lizard::sago2MonkeyGrassIsSafe() {
     if (debug) {
         cout << "[" << _id << "] checking sago -> monkey grass" << endl << flush;
     }
+    
+    // Waits for available spot on driveway // JM
+    sem_wait(&driveway_sem); 
+
     if (debug) {
         cout << "[" << _id << "] thinks sago -> monkey grass is safe" << endl << flush;
     }
@@ -142,19 +151,28 @@ void Lizard::crossSago2MonkeyGrass() {
         cout << "[" << _id << "] crossing sago -> monkey grass" << endl << flush;
     }
     
+    // Locks to update global counter safely // JM
+    counter_mutex.lock();
     numCrossingSago2MonkeyGrass++;
     
     if (numCrossingMonkeyGrass2Sago && UNIDIRECTIONAL) {
         cout << "\tCrash! We have a pile-up on the concrete." << endl;
         exit( -1 );
     }
+    counter_mutex.unlock();
 
     sleep( CROSS_SECONDS );
 
+    // Locks to decrement safely // JM
+    counter_mutex.lock();
     numCrossingSago2MonkeyGrass--;
+    counter_mutex.unlock();
 }
 
 void Lizard::madeIt2MonkeyGrass() {
+    // Frees a spot on the driveway // JM
+    sem_post(&driveway_sem); 
+
     if (debug) {
         cout << "[" << _id << "] made the sago -> monkey grass crossing" << endl << flush;
     }
@@ -175,6 +193,10 @@ void Lizard::monkeyGrass2SagoIsSafe() {
     if (debug) {
         cout << "[" << _id << "] checking monkey grass -> sago" << endl << flush;
     }
+    
+    // Waits for spot to go back // JM
+    sem_wait(&driveway_sem); 
+
     if (debug) {
         cout << "[" << _id << "] thinks monkey grass -> sago is safe" << endl << flush;
     }
@@ -185,19 +207,28 @@ void Lizard::crossMonkeyGrass2Sago() {
         cout << "[" << _id << "] crossing monkey grass -> sago" << endl << flush;
     }
     
+    // Locks counter // JM
+    counter_mutex.lock();
     numCrossingMonkeyGrass2Sago++;
     
     if (numCrossingSago2MonkeyGrass && UNIDIRECTIONAL) {
         cout << "\tOh No!, the lizards have cats all over them." << endl;
         exit( -1 );
     }
+    counter_mutex.unlock();
 
     sleep( CROSS_SECONDS );
 
+    // Locks counter to decrement // JM
+    counter_mutex.lock();
     numCrossingMonkeyGrass2Sago--;
+    counter_mutex.unlock();
 }
 
 void Lizard::madeIt2Sago() {
+    // Posts back to semaphore // JM
+    sem_post(&driveway_sem);
+
     if (debug) {
         cout << "[" << _id << "] made the monkey grass -> sago crossing" << endl << flush;
     }
@@ -207,7 +238,17 @@ void Lizard::lizardThread(Lizard *aLizard) {
     if (debug) {
         cout << "[" << aLizard->getId() << "] lizard is alive" << endl << flush;
     }
+    
+    // Loops lizard life cycle // JM
     while(running) {
+        aLizard->sleepNow();
+        aLizard->sago2MonkeyGrassIsSafe();
+        aLizard->crossSago2MonkeyGrass();
+        aLizard->madeIt2MonkeyGrass();
+        aLizard->eat();
+        aLizard->monkeyGrass2SagoIsSafe();
+        aLizard->crossMonkeyGrass2Sago();
+        aLizard->madeIt2Sago();
     }
 }
 
