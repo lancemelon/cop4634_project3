@@ -49,11 +49,15 @@ Cat::Cat (int id) { _id = id; }
 int Cat::getId() { return _id; }
 
 void Cat::run() {
-    // launch the thread to simulate the cat's behavior
+    // Launches cat thread // JM
+    _catThread = new thread(catThread, this);
 }
 
 void Cat::wait() {
-    // wait for the thread to terminate
+    // Waits for cat thread to finish // JM
+    if (_catThread != NULL) {
+        _catThread->join();
+    }
 }
 
 void Cat::sleepNow() {
@@ -225,16 +229,37 @@ int main(int argc, char **argv) {
         allLizards.push_back(new Lizard(i));
     }
 
+    // Creates cat objects // JM
+    vector<Cat*> allCats;
+    for (int i = 0; i < NUM_CATS; i++) {
+        allCats.push_back(new Cat(i));
+    }
+
+    // Runs lizard and cat threads // JM
     for (int i=0; i < NUM_LIZARDS; i++) {
         allLizards[i]->run();
+    }
+    for (int i = 0; i < NUM_CATS; i++) {
+        allCats[i]->run();
     }
 
     sleep( WORLDEND );
     running = 0;
 
+    // Waits for all threads to terminate // JM
+    for (int i = 0; i < NUM_LIZARDS; i++) {
+        allLizards[i]->wait();
+    }
+    for (int i = 0; i < NUM_CATS; i++) {
+        allCats[i]->wait();
+    }
 
     // Cleans semaphore // JM
     sem_destroy(&driveway_sem);
+
+    // Deletes objects // JM
+    for (int i = 0; i < NUM_LIZARDS; i++) delete allLizards[i];
+    for (int i = 0; i < NUM_CATS; i++) delete allCats[i];
 
     return 0;
 }
