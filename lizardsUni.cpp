@@ -27,7 +27,7 @@ int running;
 sem_t driveway_sem; 
 mutex counter_mutex;
 
-// Extra Credit: Directional Lightswitch Sync // JM
+// EC: Directional Lightswitch // JM
 sem_t cross_direction_sem;
 mutex s2m_mutex;
 mutex m2s_mutex;
@@ -136,7 +136,7 @@ void Lizard::sago2MonkeyGrassIsSafe() {
         cout << "[" << _id << "] checking sago -> monkey grass" << endl << flush;
     }
     
-    // Extra Credit: First S2M lizard locks the direction baton // JM
+    // EC: First s2m lizard locks direction baton // JM
     if (UNIDIRECTIONAL) {
         s2m_mutex.lock();
         s2m_count++;
@@ -177,7 +177,7 @@ void Lizard::crossSago2MonkeyGrass() {
 void Lizard::madeIt2MonkeyGrass() {
     sem_post(&driveway_sem); 
 
-    // Extra Credit: Last S2M lizard unlocks the direction baton // JM
+    // EC: Last s2m lizard unlocks direction baton // JM
     if (UNIDIRECTIONAL) {
         s2m_mutex.lock();
         s2m_count--;
@@ -208,7 +208,7 @@ void Lizard::monkeyGrass2SagoIsSafe() {
         cout << "[" << _id << "] checking monkey grass -> sago" << endl << flush;
     }
     
-    // Extra Credit: First M2S lizard locks the direction baton // JM
+    // EC: First m2s lizard locks the direction baton // JM
     if (UNIDIRECTIONAL) {
         m2s_mutex.lock();
         m2s_count++;
@@ -249,7 +249,7 @@ void Lizard::crossMonkeyGrass2Sago() {
 void Lizard::madeIt2Sago() {
     sem_post(&driveway_sem);
 
-    // Extra Credit: Last M2S lizard unlocks the direction baton // JM
+    // EC: Last m2s lizard unlocks direction baton // JM
     if (UNIDIRECTIONAL) {
         m2s_mutex.lock();
         m2s_count--;
@@ -322,7 +322,7 @@ int main(int argc, char **argv) {
     }
 
     sem_destroy(&driveway_sem);
-    sem_destroy(&cross_direction_sem); // Extra Credit Sem // JM
+    sem_destroy(&cross_direction_sem); // EC: Sem // JM
 
     for (int i = 0; i < NUM_LIZARDS; i++) delete allLizards[i];
     for (int i = 0; i < NUM_CATS; i++) delete allCats[i];

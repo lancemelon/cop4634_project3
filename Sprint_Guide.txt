@@ -1,0 +1,8 @@
+Project Sprints
+    Sprint 1: Synchronization Setup: Include necessary headers (<semaphore.h>) and initialize global semaphores/mutexes in main() to control driveway access and protect shared counters.   
+    Project 3 Lizards.pdf+ 1
+
+    Sprint 2: Thread Execution & Joining: Complete the Cat::run, Cat::wait, Cat::catThread, and Lizard::lizardThread methods to spawn and join the threads properly, preventing the main thread from exiting prematurely.   
+    Project 3 Lizards.pdf+ 1
+
+    Sprint 3: Crossing Logic: Implement the wait and cross logic in Lizard::sago2MonkeyGrassIsSafe, Lizard::crossSago2MonkeyGrass, and their return counterparts, utilizing the initialized semaphores to ensure no more than MAX_LIZARD_CROSSING lizards cross at once.

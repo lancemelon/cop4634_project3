@@ -28,7 +28,7 @@ int numCrossingMonkeyGrass2Sago;
 int debug;
 int running;
 
-// Declares global semaphore and mutex // JM
+// Declares semaphore and mutex // JM
 sem_t driveway_sem; 
 mutex counter_mutex;
 
