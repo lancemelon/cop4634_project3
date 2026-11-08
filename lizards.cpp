@@ -1,16 +1,16 @@
 /***************************************************************/
 /*                                                             */
-/* lizard.cpp                                                  */
+/* lizards.cpp                                                  */
 /*                                                             */
 /* To compile, you need all the files listed below             */
-/*   lizard.cpp                                                */
+/*   lizards.cpp                                                */
 /*                                                             */
 /* Be sure to use the -lpthread option for the compile command */
-/*   g++ -g -Wall -std=c++11 lizard.cpp -o lizard -pthread     */
+/*   g++ -g -Wall -std=c++11 lizards.cpp -o lizards -pthread     */
 /*                                                             */
 /* Execute with the -d command-line option to enable debugging */
 /* output.  For example,                                       */
-/*   ./lizard -d                                               */
+/*   ./lizards -d                                               */
 /*                                                             */
 /***************************************************************/
 
@@ -25,7 +25,7 @@
 #include <thread>
 #include <mutex>
 #include <vector>
-#include <condition_variable> // LP
+#include <condition_variable> // LP JM
 
 
 using namespace std;
@@ -54,7 +54,7 @@ using namespace std;
  * be simulated.  
  * Try 30 for development and 120 for more thorough testing.
  */
-#define WORLDEND             30
+#define WORLDEND             180
 
 /*
  * Number of lizard threads to create
@@ -97,32 +97,33 @@ using namespace std;
  */
 
 /*
- * Counting semaphore built on a mutex and condition variable (blocks, never spins). // LP
- * wait() takes a permit (sleeping until one is available); post() returns one.      // LP
+ * Counting semaphore built on a mutex and condition variable (blocks, never spins). // LP JM
+ * wait() takes a permit (sleeping until one is available); post() returns one.      // LP JM
  */
-class Semaphore {                                                          // LP
-	mutex              _m;                                                 // LP
-	condition_variable _cv;                                                // LP
-	int                _count;                                             // LP
+class Semaphore {                                                          // LP JM
+	mutex              _m;                                                 // LP JM
+	condition_variable _cv;                                                // LP JM
+	int                _count;                                             // LP JM
 
-	public:                                                                // LP
-		Semaphore(int count = 0) : _count(count) {}                        // LP
-		void wait() {                                                      // LP
-			unique_lock<mutex> lk(_m);                                     // LP
-			_cv.wait(lk, [this] { return _count > 0; });                   // LP
-			_count--;                                                      // LP
-		}                                                                  // LP
-		void post() {                                                      // LP
-			{                                                              // LP
-				lock_guard<mutex> lk(_m);                                  // LP
-				_count++;                                                  // LP
-			}                                                              // LP
-			_cv.notify_one();                                              // LP
-		}                                                                  // LP
-};                                                                         // LP
+	public:                                                                // LP JM
+		Semaphore(int count = 0) : _count(count) {}                        // LP JM
+		void wait() {                                                      // LP JM
+			unique_lock<mutex> lk(_m);                                     // LP JM
+			_cv.wait(lk, [this] { return _count > 0; });                   // LP JM
+			_count--;                                                      // LP JM
+		}                                                                  // LP JM
+		void post() {                                                      // LP JM
+			{                                                              // LP JM
+				lock_guard<mutex> lk(_m);                                  // LP JM
+				_count++;                                                  // LP JM
+			}                                                              // LP JM
+			_cv.notify_one();                                              // LP JM
+		}                                                                  // LP JM
+};                                                                         // LP JM
 
-mutex     counterLock;       // protects the crossing counters below          LP
-Semaphore *driveway = NULL;  // permits = lizards allowed on the driveway      LP
+mutex     counterLock;       // protects the crossing counters below          LP JM
+Semaphore *driveway = NULL;  // permits = lizards allowed on the driveway      LP JM
+int       maxCrossing = 0;   // most lizards ever seen crossing at once (report)  LP JM
 
 
 /**************************************************/
@@ -168,7 +169,7 @@ class Cat {
 Cat::Cat (int id)
 {
 	_id = id;
-	_catThread = NULL; // LP
+	_catThread = NULL; // LP JM
 }
 
 /**
@@ -190,7 +191,7 @@ int Cat::getId()
  void Cat::run() 
  {
 	 // launch the thread to simulate the cat's behavior	 
-	 _catThread = new thread ( catThread, this ); // LP
+	 _catThread = new thread ( catThread, this ); // LP JM
  }
  
  /**
@@ -201,11 +202,11 @@ int Cat::getId()
  void Cat::wait()
  {
 	 // wait for the thread to terminate
-	 if (_catThread != NULL) { // LP
-		 _catThread->join();   // LP
-		 delete _catThread;    // LP
-		 _catThread = NULL;    // LP
-	 }                         // LP
+	 if (_catThread != NULL) { // LP JM
+		 _catThread->join();   // LP JM
+		 delete _catThread;    // LP JM
+		 _catThread = NULL;    // LP JM
+	 }                         // LP JM
  }
  
  
@@ -267,13 +268,13 @@ void Cat::catThread (Cat *aCat)
 		/*
 	     * Check for too many lizards crossing
 	     */
-		counterLock.lock(); // LP
+		counterLock.lock(); // LP JM
 		if (numCrossingSago2MonkeyGrass + numCrossingMonkeyGrass2Sago > MAX_LIZARD_CROSSING)
 		{
 		  cout << "\tThe cats are happy - they have toys.\n";
 		  exit( -1 );
 		}
-		counterLock.unlock(); // LP
+		counterLock.unlock(); // LP JM
     }
 }
 
@@ -285,7 +286,7 @@ class Lizard {
 
 	public:
 		Lizard(int id);
-		~Lizard() { delete _aLizard; } // LP
+		~Lizard() { delete _aLizard; } // LP JM
 		int getId();
         void run();
         void wait();
@@ -313,7 +314,7 @@ class Lizard {
 Lizard::Lizard (int id)
 {
 	_id = id;
-	_aLizard = NULL; // LP
+	_aLizard = NULL; // LP JM
 }
 
 /**
@@ -398,7 +399,7 @@ void Lizard::sago2MonkeyGrassIsSafe()
 		cout << flush;
     }
 
-	driveway->wait(); // LP block until a driveway slot is free
+	driveway->wait(); // LP JM block until a driveway slot is free
 
 
 	if (debug)
@@ -427,7 +428,7 @@ void Lizard::crossSago2MonkeyGrass()
 	/*
 	 * One more crossing this way
 	 */
-	counterLock.lock(); // LP
+	counterLock.lock(); // LP JM
 	numCrossingSago2MonkeyGrass++;
 
 	/*
@@ -440,12 +441,14 @@ void Lizard::crossSago2MonkeyGrass()
 		cout << "\t" << numCrossingMonkeyGrass2Sago << " crossing monkey grass -> sago" << endl;
 		exit( -1 );
     }
-	if (debug) // LP
-	{          // LP
-		cout << "\ttotal crossing: " << numCrossingSago2MonkeyGrass + numCrossingMonkeyGrass2Sago << endl; // LP
-		cout << flush; // LP
-	}          // LP
-	counterLock.unlock(); // LP
+	if (numCrossingSago2MonkeyGrass + numCrossingMonkeyGrass2Sago > maxCrossing) // LP JM
+		maxCrossing = numCrossingSago2MonkeyGrass + numCrossingMonkeyGrass2Sago; // LP JM
+	if (debug) // LP JM
+	{          // LP JM
+		cout << "\ttotal crossing: " << numCrossingSago2MonkeyGrass + numCrossingMonkeyGrass2Sago << endl; // LP JM
+		cout << flush; // LP JM
+	}          // LP JM
+	counterLock.unlock(); // LP JM
 
 
 	/*
@@ -456,9 +459,9 @@ void Lizard::crossSago2MonkeyGrass()
     /*
      * That one seems to have made it
      */
-	counterLock.lock(); // LP
+	counterLock.lock(); // LP JM
     numCrossingSago2MonkeyGrass--;
-	counterLock.unlock(); // LP
+	counterLock.unlock(); // LP JM
 }
 
 
@@ -478,7 +481,7 @@ void Lizard::madeIt2MonkeyGrass()
 		cout << flush;
     }
 
-	driveway->post(); // LP free the driveway slot
+	driveway->post(); // LP JM free the driveway slot
 }
 
 
@@ -527,7 +530,7 @@ void Lizard::monkeyGrass2SagoIsSafe()
 		cout << flush;
     }
 
-	driveway->wait(); // LP block until a driveway slot is free
+	driveway->wait(); // LP JM block until a driveway slot is free
 	if (debug)
     {
 		cout << "[" << _id << "] thinks  monkey grass -> sago  is safe" << endl;
@@ -554,7 +557,7 @@ void Lizard::crossMonkeyGrass2Sago()
     /*
      * One more crossing this way
      */
-	counterLock.lock(); // LP
+	counterLock.lock(); // LP JM
 	numCrossingMonkeyGrass2Sago++;
 
   
@@ -568,12 +571,14 @@ void Lizard::crossMonkeyGrass2Sago()
 		cout << "\t " << numCrossingMonkeyGrass2Sago << " crossing monkey grass -> sago" << endl;
 		exit( -1 );
     }
-	if (debug) // LP
-	{          // LP
-		cout << "\ttotal crossing: " << numCrossingSago2MonkeyGrass + numCrossingMonkeyGrass2Sago << endl; // LP
-		cout << flush; // LP
-	}          // LP
-	counterLock.unlock(); // LP
+	if (numCrossingSago2MonkeyGrass + numCrossingMonkeyGrass2Sago > maxCrossing) // LP JM
+		maxCrossing = numCrossingSago2MonkeyGrass + numCrossingMonkeyGrass2Sago; // LP JM
+	if (debug) // LP JM
+	{          // LP JM
+		cout << "\ttotal crossing: " << numCrossingSago2MonkeyGrass + numCrossingMonkeyGrass2Sago << endl; // LP JM
+		cout << flush; // LP JM
+	}          // LP JM
+	counterLock.unlock(); // LP JM
 
 	/*
      * It takes a while to cross, so simulate it
@@ -583,9 +588,9 @@ void Lizard::crossMonkeyGrass2Sago()
 	/*
      * That one seems to have made it
      */
-	counterLock.lock(); // LP
+	counterLock.lock(); // LP JM
 	numCrossingMonkeyGrass2Sago--;
-	counterLock.unlock(); // LP
+	counterLock.unlock(); // LP JM
 }
 
 
@@ -606,7 +611,7 @@ void Lizard::madeIt2Sago()
 		cout << flush;
     }
 
-	driveway->post(); // LP free the driveway slot
+	driveway->post(); // LP JM free the driveway slot
 }
 
 /**
@@ -656,14 +661,14 @@ void Lizard::lizardThread(Lizard *aLizard)
 
 
 
-      aLizard->sleepNow();               // LP
-      aLizard->sago2MonkeyGrassIsSafe(); // LP
-      aLizard->crossSago2MonkeyGrass();  // LP
-      aLizard->madeIt2MonkeyGrass();     // LP
-      aLizard->eat();                    // LP
-      aLizard->monkeyGrass2SagoIsSafe(); // LP
-      aLizard->crossMonkeyGrass2Sago();  // LP
-      aLizard->madeIt2Sago();            // LP
+      aLizard->sleepNow();               // LP JM
+      aLizard->sago2MonkeyGrassIsSafe(); // LP JM
+      aLizard->crossSago2MonkeyGrass();  // LP JM
+      aLizard->madeIt2MonkeyGrass();     // LP JM
+      aLizard->eat();                    // LP JM
+      aLizard->monkeyGrass2SagoIsSafe(); // LP JM
+      aLizard->crossMonkeyGrass2Sago();  // LP JM
+      aLizard->madeIt2Sago();            // LP JM
     }
 
 }
@@ -684,7 +689,7 @@ int main(int argc, char **argv)
 	/*
 	 * Declare local variables
      */
-	vector<Cat*> allCats; // LP
+	vector<Cat*> allCats; // LP JM
 
 
 
@@ -715,7 +720,7 @@ int main(int argc, char **argv)
 	/*
      * Initialize locks and/or semaphores
      */
-	driveway = new Semaphore(MAX_LIZARD_CROSSING); // LP
+	driveway = new Semaphore(MAX_LIZARD_CROSSING); // LP JM
 
 
 
@@ -732,9 +737,9 @@ int main(int argc, char **argv)
     /*
      * Create NUM_CATS cat threads
      */
-	for (int i=0; i < NUM_CATS; i++) { // LP
-		allCats.push_back(new Cat(i)); // LP
-	}                                  // LP
+	for (int i=0; i < NUM_CATS; i++) { // LP JM
+		allCats.push_back(new Cat(i)); // LP JM
+	}                                  // LP JM
 	 
 
 	/*
@@ -743,9 +748,9 @@ int main(int argc, char **argv)
     for (int i=0; i < NUM_LIZARDS; i++) {
         allLizards[i]->run();
     }
-    for (int i=0; i < NUM_CATS; i++) { // LP
-        allCats[i]->run();             // LP
-    }                                  // LP
+    for (int i=0; i < NUM_CATS; i++) { // LP JM
+        allCats[i]->run();             // LP JM
+    }                                  // LP JM
 
 	/*
      * Now let the world run for a while
@@ -762,12 +767,12 @@ int main(int argc, char **argv)
     /*
      * Wait until all threads terminate
      */
-	for (int i=0; i < NUM_LIZARDS; i++) { // LP
-		allLizards[i]->wait();            // LP
-	}                                     // LP
-	for (int i=0; i < NUM_CATS; i++) {    // LP
-		allCats[i]->wait();               // LP
-	}                                     // LP
+	for (int i=0; i < NUM_LIZARDS; i++) { // LP JM
+		allLizards[i]->wait();            // LP JM
+	}                                     // LP JM
+	for (int i=0; i < NUM_CATS; i++) {    // LP JM
+		allCats[i]->wait();               // LP JM
+	}                                     // LP JM
 
 
 
@@ -777,20 +782,21 @@ int main(int argc, char **argv)
 	/*
      * Delete the locks and semaphores
      */
-	delete driveway; // LP
-	driveway = NULL; // LP
+	cout << "Maximum number of lizards crossing at once: " << maxCrossing << endl; // LP JM
+	delete driveway; // LP JM
+	driveway = NULL; // LP JM
 	 
 	 
 	 
 	/*
 	 * Delete all cat and lizard objects
 	 */
-	for (int i=0; i < NUM_LIZARDS; i++) { // LP
-		delete allLizards[i];             // LP
-	}                                     // LP
-	for (int i=0; i < NUM_CATS; i++) {    // LP
-		delete allCats[i];                // LP
-	}                                     // LP
+	for (int i=0; i < NUM_LIZARDS; i++) { // LP JM
+		delete allLizards[i];             // LP JM
+	}                                     // LP JM
+	for (int i=0; i < NUM_CATS; i++) {    // LP JM
+		delete allCats[i];                // LP JM
+	}                                     // LP JM
  
 
 
